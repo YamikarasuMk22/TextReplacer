@@ -17,11 +17,12 @@ import javax.swing.TransferHandler;
 public class MainFrame {
 
 	public static String ErrMsg;
-	private JFrame frame;
-	private JTextArea textArea;
+	public static JFrame frame;
+	public static JTextArea textArea;
 
 	public static void main(String[] args) {
 		EventQueue.invokeLater(new Runnable() {
+			@SuppressWarnings("static-access")
 			public void run() {
 				try {
 					MainFrame window = new MainFrame();
@@ -49,6 +50,7 @@ public class MainFrame {
 		frame.setBounds(100, 100, 450, 300);
 		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
+		int result;
 		JScrollPane scrollPane = new JScrollPane();
 		frame.getContentPane().add(scrollPane, BorderLayout.CENTER);
 
@@ -56,6 +58,13 @@ public class MainFrame {
 		scrollPane.setViewportView(textArea);
 		textArea.setText( "一括置換するファイルをここにドロップしてください。\n"
 						+ "Backupフォルダにバックアップが作成されます。\n" );
+
+		result = ReadExcel.getReplaceTableSize();
+		if(result > -1) {
+			textArea.append("置換テーブル読込成功:" + result + "行\n");
+		} else {
+			textArea.append("置換テーブル読込失敗:" + ErrMsg + "\n");
+		}
 
 		// ドロップ操作を有効にする
 		textArea.setTransferHandler(new DropFileHandler());
@@ -102,28 +111,32 @@ public class MainFrame {
 				@SuppressWarnings("unchecked")
 				List<File> files = (List<File>) t.getTransferData(DataFlavor.javaFileListFlavor);
 
-				// テキストエリアにステータスリストを作成する
-				StringBuffer statusList = new StringBuffer();
-				int replaceCount = 0;
-				boolean result = true;
+				int replaceCount = 0;		//置換ファイルカウンタ
+				int result = 0;			//置換回数(ファイル毎)
+
+				textArea.append("[置換開始]--------------------------------------------------------------------------\n");
 
 				for (File file : files) {
-					statusList.append(file.getPath());
-					statusList.append("\n");
+					replaceCount ++;
 
-					result = Replace.ReplaceByExcel(file.getPath());
+					textArea.append("ファイル" + replaceCount);
+					textArea.append("	" + file.getPath() + "\n");
 
-					if(result) {
-						statusList.append("置換成功:" + replaceCount + "箇所\n");
+					result = Replace.ReplaceByExcel(file);
+
+					if(result > -1) {
+						textArea.append("	置換成功:" + result + "箇所\n");
 					} else {
-						statusList.append("置換失敗:" + ErrMsg + "\n");
+						textArea.append("	置換失敗:" + ErrMsg + "\n");
 					}
-					// テキストエリアにステータスリストを表示する
-					textArea.setText(statusList.toString());
 				}
+
+				textArea.append("[置換終了]--------------------------------------------------------------------------\n");
+
 			} catch (UnsupportedFlavorException | IOException e) {
 				e.printStackTrace();
-				textArea.setText("置換失敗(内部エラー)\n" + e);
+				textArea.append("	置換失敗(内部エラー)\n" + e);
+				textArea.append("[置換終了]--------------------------------------------------------------------------\n");
 			}
 			return true;
 		}
