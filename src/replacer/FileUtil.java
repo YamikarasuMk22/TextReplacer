@@ -5,6 +5,8 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.channels.FileChannel;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class FileUtil {
 	@SuppressWarnings("resource")
@@ -21,6 +23,22 @@ public class FileUtil {
 			if (outChannel != null)
 				outChannel.close();
 		}
+	}
+
+	public static int matchCounter(String str, String searchstr) {
+
+		final String REGEX = searchstr;
+		final String INPUT = str;
+
+		Pattern p = Pattern.compile(REGEX, Pattern.LITERAL);
+		Matcher m = p.matcher(INPUT);
+		int count = 0;
+
+		while (m.find()) {
+			count++;
+		}
+
+		return count;
 	}
 
 }

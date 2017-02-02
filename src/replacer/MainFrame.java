@@ -46,7 +46,7 @@ public class MainFrame {
 	 */
 	private void initialize() {
 		frame = new JFrame();
-		frame = new JFrame("Replace By Excel");
+		frame = new JFrame("TextReplacer");
 		frame.setBounds(100, 100, 450, 300);
 		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
@@ -55,6 +55,9 @@ public class MainFrame {
 		frame.getContentPane().add(scrollPane, BorderLayout.CENTER);
 
 		textArea = new JTextArea();
+		textArea.setLineWrap(true);
+		textArea.setEditable(false);
+
 		scrollPane.setViewportView(textArea);
 		textArea.setText( "一括置換するファイルをここにドロップしてください。\n"
 						+ "Backupフォルダにバックアップが作成されます。\n" );
