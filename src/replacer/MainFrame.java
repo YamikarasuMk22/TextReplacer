@@ -116,6 +116,7 @@ public class MainFrame {
 
 				int replaceCount = 0;		//置換ファイルカウンタ
 				int result = 0;			//置換回数(ファイル毎)
+				String logFilePath = "";
 
 				textArea.append("[置換開始]--------------------------------------------------------------------------\n");
 
@@ -135,6 +136,15 @@ public class MainFrame {
 				}
 
 				textArea.append("[置換終了]--------------------------------------------------------------------------\n");
+
+				//ログファイル出力
+				logFilePath = Replace.saveLog(textArea);
+
+				if(!logFilePath.equals("")) {
+					textArea.append("※ログファイル作成成功:" + logFilePath + "\n");
+				} else {
+					textArea.append("※ログファイル作成失敗:" + ErrMsg + "\n");
+				}
 
 			} catch (UnsupportedFlavorException | IOException e) {
 				e.printStackTrace();

@@ -6,12 +6,18 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
+
+import javax.swing.JTextArea;
+import javax.swing.text.BadLocationException;
 
 public class Replace {
 
-	static int ReplaceByExcel(File file) {
+	public static int ReplaceByExcel(File file) {
 		int result = 0;	//置換回数
 
 		List<ReplaceTable> replaceTableList = new ArrayList<ReplaceTable>();
@@ -25,8 +31,16 @@ public class Replace {
 			return result;
 		}
 
-		//Fileバックアップ
-		File backupFile = new File("BackUp\\" + file.getName() + ".backup");
+		//バックアップ
+		int backUpNumber = 1;
+		File backupFile = new File("BackUp\\" + file.getName() + ".BK" + backUpNumber);
+
+		//バックアップファイル上書き回避
+		while(backupFile.exists()) {
+			backUpNumber ++;
+			backupFile = new File("BackUp\\" + file.getName() + ".BK" + backUpNumber);
+		}
+
 		try {
 			FileUtil.copyTargetFile(file, backupFile);
         } catch (IOException e) {
@@ -55,7 +69,7 @@ public class Replace {
 
 					result = result + FileUtil.matchCounter(strReadText, strBefore);
 
-					System.out.println(strBefore + "=>" + strAfter);
+					//System.out.println(strBefore + "=>" + strAfter);
 
 					strReadText= strReadText.replaceAll(strBefore,strAfter);
 				}
@@ -78,6 +92,42 @@ public class Replace {
 			e.printStackTrace();
 			MainFrame.ErrMsg = e.toString();
 			result = -1;
+		}
+
+		return result;
+	}
+
+	public static String saveLog(JTextArea textArea) {
+
+		Date nowDate = new Date();
+		DateFormat dateTimeFormat = new SimpleDateFormat("yyyyMMddHHmmss");
+
+		File logFile = new File("Log\\" + dateTimeFormat.format(nowDate) + ".log");
+		String result = "";
+
+		StringBuffer sb = new StringBuffer();
+
+		int linecount = textArea.getLineCount();
+		try {
+
+			for (int i = 0; i < linecount; i++) {
+				int start = textArea.getLineStartOffset(i);
+				int end = textArea.getLineEndOffset(i);
+				sb.append(textArea.getText(start, end - start) + "\r\n");
+			}
+
+			FileWriter fw = new FileWriter(logFile);
+			fw.write(sb.toString());
+			fw.close();
+			result = logFile.getPath();
+		} catch (BadLocationException e) {
+			e.printStackTrace();
+			MainFrame.ErrMsg = e.toString();
+			result = "";
+		} catch (IOException e) {
+			e.printStackTrace();
+			MainFrame.ErrMsg = e.toString();
+			result = "";
 		}
 
 		return result;
