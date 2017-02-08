@@ -1,8 +1,11 @@
 package replacer;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
+import java.io.FileReader;
 import java.io.IOException;
 import java.nio.channels.FileChannel;
 import java.util.regex.Matcher;
@@ -36,6 +39,45 @@ public class FileUtil {
 
 		while (m.find()) {
 			count++;
+		}
+
+		return count;
+	}
+
+	public static boolean isMatch(String str, String searchstr) {
+
+		final String REGEX = searchstr;
+		final String INPUT = str;
+
+		Pattern p = Pattern.compile(REGEX, Pattern.LITERAL);
+		Matcher m = p.matcher(INPUT);
+		boolean count = false;
+
+		while (m.find()) {
+			count = true;
+		}
+
+		return count;
+	}
+
+	public static int getFileRow(File file) {
+
+		int count = 0;
+
+		try {
+			FileReader fr = new FileReader(file);
+			BufferedReader br = new BufferedReader(fr);
+
+			while((br.readLine()) != null) {
+				count ++;
+			}
+
+			br.close();
+			fr.close();
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
 		}
 
 		return count;

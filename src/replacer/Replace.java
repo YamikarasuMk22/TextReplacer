@@ -21,11 +21,19 @@ public class Replace {
 		int result = 0;	//置換回数
 
 		List<ReplaceTable> replaceTableList = new ArrayList<ReplaceTable>();
+		List<String> notReplaceList = new ArrayList<String>();
 
-		//Excel読み込み
+		//置換テーブル読み込み
 		replaceTableList = ReadExcel.readReplaceTable();
-
 		if(replaceTableList == null) {
+			result = -1;
+
+			return result;
+		}
+
+		//無視リスト読み込み
+		notReplaceList = ReadExcel.readNotReplaceList();
+		if(notReplaceList == null) {
 			result = -1;
 
 			return result;
@@ -50,36 +58,76 @@ public class Replace {
 			return result;
         }
 
+		//行数取得
+//		int fileRow = FileUtil.getFileRow(file);
+
 		//文字列置換・ファイル置換
 		try {
-			String strReadText =null;
+			String strReadText = "";
 			StringBuffer sbWriteText = new StringBuffer();
 
-			FileReader fr;
-
-			fr = new FileReader(file);
+			FileReader fr = new FileReader(file);
 			BufferedReader br = new BufferedReader(fr);
+
+			System.out.println(replaceTableList.size());
+
+			boolean notReplaceFlag = false;
+//			int nowRow = 1;
+
+			//MainFrame.textArea.append("	0%");
 
 			while((strReadText = br.readLine()) != null) {
 
+				//無視リスト処理
+				for(int j=0; j<notReplaceList.size(); j++) {
+					if(FileUtil.isMatch(strReadText, notReplaceList.get(j))) {
+						notReplaceFlag = true;
+					}
+				}
+				if(notReplaceFlag) {
+					notReplaceFlag = false;
+					System.out.println(strReadText);
+					sbWriteText.append(strReadText);
+					sbWriteText.append("\r\n");
+					continue;
+				}
+
+				//置換処理
 				for(int i=0; i<replaceTableList.size(); i++) {
+
 					ReplaceTable replaceTable = replaceTableList.get(i);
 					String strBefore = replaceTable.getSearchStr();
 					String strAfter = replaceTable.getReplaceStr();
 
+					//System.out.print(i + "," + strBefore + "=>" + strAfter);
+
 					result = result + FileUtil.matchCounter(strReadText, strBefore);
 
-					//System.out.println(strBefore + "=>" + strAfter);
+					//System.out.println(":" + result);
 
-					strReadText= strReadText.replaceAll(strBefore,strAfter);
+					strReadText = strReadText.replaceAll(strBefore,strAfter);
+
+					//System.out.println(strReadText);
 				}
 				sbWriteText.append(strReadText);
 				sbWriteText.append("\r\n");
 
+				//進捗率表示
+//				for(int p=20; p<100; p=p+20) {
+//					if(nowRow/fileRow == p) {
+//						MainFrame.textArea.append("..." + p + "%");
+//					}
+//				}
+//				nowRow++;
+
 			}
+
+			//MainFrame.textArea.append("...100%\n");
 
 			FileWriter fw = new FileWriter(file);
 			fw.write(sbWriteText.toString());
+
+			//System.out.println(strReadText);
 
 			fw.close();
 			fr.close();
