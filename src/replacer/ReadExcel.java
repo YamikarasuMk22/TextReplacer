@@ -85,7 +85,7 @@ public class ReadExcel {
 				replaceTable.add(cells);
 
 				tmpStr = cell1.getStringCellValue();
-				System.out.println(maxrow.getNumericCellValue() + "," + i + "," + replaceTable.size() + "," + cell1 + cell2);
+				//System.out.println(maxrow.getNumericCellValue() + "," + i + "," + replaceTable.size() + "," + cell1 + cell2);
 			}
 
 			wb.close();
