@@ -59,11 +59,10 @@ public class MainFrame {
 		textArea.setEditable(false);
 
 		scrollPane.setViewportView(textArea);
-		textArea.setText( "一括置換するファイルをここにドロップしてください。\n"
-						+ "Backupフォルダにバックアップが作成されます。\n" );
+		textArea.setText("一括置換するファイルをここにドロップしてください。\n" + "Backupフォルダにバックアップが作成されます。\n");
 
 		result = ReadExcel.getReplaceTableSize();
-		if(result > -1) {
+		if (result > -1) {
 			textArea.append("置換テーブル読込成功:" + result + "行\n");
 		} else {
 			textArea.append("置換テーブル読込失敗:" + ErrMsg + "\n");
@@ -98,37 +97,41 @@ public class MainFrame {
 
 		/**
 		 * ドロップされたファイルを受け取る
+		 *
+		 * @return
 		 */
 		@Override
-		public boolean importData(TransferSupport support) {
+		public boolean importData(final TransferSupport support) {
+
 			// 受け取っていいものか確認する
 			if (!canImport(support)) {
 				textArea.setText("置換不可:置換可能なファイルではありません。");
 				return false;
 			}
 
-			// ドロップ処理
-			Transferable t = support.getTransferable();
 			try {
+				// ドロップ処理
+				Transferable t = support.getTransferable();
+
 				// ファイルを受け取る
 				@SuppressWarnings("unchecked")
 				List<File> files = (List<File>) t.getTransferData(DataFlavor.javaFileListFlavor);
 
-				int replaceCount = 0;		//置換ファイルカウンタ
-				int result = 0;			//置換回数(ファイル毎)
+				int replaceCount = 0; // 置換ファイルカウンタ
+				int result = 0; // 置換回数(ファイル毎)
 				String logFilePath = "";
 
 				textArea.append("[置換開始]--------------------------------------------------------------------------\n");
 
 				for (File file : files) {
-					replaceCount ++;
+					replaceCount++;
 
 					textArea.append("ファイル" + replaceCount);
 					textArea.append("	" + file.getPath() + "\n");
 
 					result = Replace.ReplaceByExcel(file);
 
-					if(result > -1) {
+					if (result > -1) {
 						textArea.append("	置換成功:" + result + "箇所\n");
 					} else {
 						textArea.append("	置換失敗:" + ErrMsg + "\n");
@@ -137,10 +140,10 @@ public class MainFrame {
 
 				textArea.append("[置換終了]--------------------------------------------------------------------------\n");
 
-				//ログファイル出力
+				// ログファイル出力
 				logFilePath = Replace.saveLog(textArea);
 
-				if(!logFilePath.equals("")) {
+				if (!logFilePath.equals("")) {
 					textArea.append("※ログファイル作成成功:" + logFilePath + "\n");
 				} else {
 					textArea.append("※ログファイル作成失敗:" + ErrMsg + "\n");
@@ -151,7 +154,8 @@ public class MainFrame {
 				textArea.append("	置換失敗(内部エラー)\n" + e);
 				textArea.append("[置換終了]--------------------------------------------------------------------------\n");
 			}
-			return true;
+
+			return false;
 		}
 	}
 }

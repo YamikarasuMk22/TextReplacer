@@ -66,7 +66,7 @@ public class ReadExcel {
 			XSSFRow row = sheet.getRow(REPLACE_TABLE_SIZE_ROW);
 			XSSFCell maxrow = row.getCell(REPLACE_TABLE_SIZE_CELL);
 
-			for(int i = START_ROW; i <= (int)maxrow.getNumericCellValue()+1; i++) {
+			for(int i = START_ROW; i < (int)maxrow.getNumericCellValue() + START_ROW; i++) {
 
 				row = sheet.getRow(i);
 				XSSFCell cell1 = row.getCell(0);	//検索文字列
@@ -85,7 +85,7 @@ public class ReadExcel {
 				replaceTable.add(cells);
 
 				tmpStr = cell1.getStringCellValue();
-				//System.out.println(maxrow.getNumericCellValue() + "," + replaceTable.size() + "," + cell1 + cell2);
+				System.out.println(maxrow.getNumericCellValue() + "," + i + "," + replaceTable.size() + "," + cell1 + cell2);
 			}
 
 			wb.close();
@@ -113,7 +113,7 @@ public class ReadExcel {
 			XSSFRow row = sheet.getRow(NOT_REPLACE_LIST_SIZE_ROW);
 			XSSFCell maxrow = row.getCell(NOT_REPLACE_LIST_SIZE_CELL);
 
-			for(int i = START_ROW; i <= (int)maxrow.getNumericCellValue()+1; i++) {
+			for(int i = START_ROW; i < (int)maxrow.getNumericCellValue() + START_ROW; i++) {
 
 				row = sheet.getRow(i);
 				XSSFCell cell = row.getCell(2);		//無視文字列

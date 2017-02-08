@@ -16,7 +16,6 @@ import javax.swing.JTextArea;
 import javax.swing.text.BadLocationException;
 
 public class Replace {
-
 	public static int ReplaceByExcel(File file) {
 		int result = 0;	//置換回数
 
@@ -86,7 +85,7 @@ public class Replace {
 				}
 				if(notReplaceFlag) {
 					notReplaceFlag = false;
-					System.out.println(strReadText);
+					//System.out.println(strReadText);
 					sbWriteText.append(strReadText);
 					sbWriteText.append("\r\n");
 					continue;
