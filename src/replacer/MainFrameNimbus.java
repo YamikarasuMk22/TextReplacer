@@ -68,8 +68,14 @@ public class MainFrameNimbus {
 		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
 		// テキストエリア
-		textArea = new JTextArea(15, 30);
+		textArea = new JTextArea(12, 40);
+		textArea.setLineWrap(true);
+		textArea.setEditable(false);
+
 		JScrollPane sp = new JScrollPane(textArea);
+		sp.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
+		sp.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+
 		frame.add(sp);
 
 		// プログレスバー
