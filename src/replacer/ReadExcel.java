@@ -14,13 +14,33 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
 public class ReadExcel {
 
-	/** 変換テーブルサイズ セル位置 **/
+	/** 置換テーブルシート **/
+	private static final int REPLACE_TABLE_SHEET = 0;
+
+	/** セッティングシート **/
+	private static final int SETTINGS_SHEET = 1;
+
+	/** 置換テーブルサイズ セル位置 **/
 	private static final int REPLACE_TABLE_SIZE_ROW = 0;
 	private static final int REPLACE_TABLE_SIZE_CELL = 0;
 
 	/** 無視リストサイズ セル位置 **/
 	private static final int NOT_REPLACE_LIST_SIZE_ROW = 0;
-	private static final int NOT_REPLACE_LIST_SIZE_CELL = 2;
+	private static final int NOT_REPLACE_LIST_SIZE_CELL = 0;
+
+	/** 無視リスト列 **/
+	private static final int NOT_REPLACE_LIST_CELL = 0;
+
+	/** 注釈定義 セル位置 **/
+	private static final int MARK_STR_ROW = 2;
+	private static final int MARK_STR_CELL = 2;
+
+	/** 注釈リストサイズ セル位置 **/
+	private static final int MARKING_LIST_SIZE_ROW = 0;
+	private static final int MARKING_LIST_SIZE_CELL = 1;
+
+	/** 注釈リスト列 **/
+	private static final int MARKING_LIST_CELL = 1;
 
 	/** リスト開始位置 **/
 	private static final int START_ROW = 2;
@@ -33,11 +53,63 @@ public class ReadExcel {
 
 		try {
 			XSSFWorkbook wb = new XSSFWorkbook(new FileInputStream(EXCEL_REPLACE_TABLE));
-			XSSFSheet sheet = wb.getSheetAt(0);
+			XSSFSheet sheet = wb.getSheetAt(REPLACE_TABLE_SHEET);
 
 			//テーブルサイズが書いてあるセル
 			XSSFRow row = sheet.getRow(REPLACE_TABLE_SIZE_ROW);
 			XSSFCell maxrow = row.getCell(REPLACE_TABLE_SIZE_CELL);
+
+			result = (int) (maxrow.getNumericCellValue());
+
+			wb.close();
+
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+			MainFrame.ErrMsg = e.toString();
+			result = -1;
+		} catch (IOException e) {
+			e.printStackTrace();
+			MainFrame.ErrMsg = e.toString();
+			result = -1;
+		}
+		return result;
+	}
+
+	public static int getNotReplaceListSize() {
+		int result = -1;
+
+		try {
+			XSSFWorkbook wb = new XSSFWorkbook(new FileInputStream(EXCEL_REPLACE_TABLE));
+			XSSFSheet sheet = wb.getSheetAt(SETTINGS_SHEET);
+
+			XSSFRow row = sheet.getRow(NOT_REPLACE_LIST_SIZE_ROW);
+			XSSFCell maxrow = row.getCell(NOT_REPLACE_LIST_SIZE_CELL);
+
+			result = (int) (maxrow.getNumericCellValue());
+
+			wb.close();
+
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+			MainFrame.ErrMsg = e.toString();
+			result = -1;
+		} catch (IOException e) {
+			e.printStackTrace();
+			MainFrame.ErrMsg = e.toString();
+			result = -1;
+		}
+		return result;
+	}
+
+	public static int getMarkingListSize() {
+		int result = -1;
+
+		try {
+			XSSFWorkbook wb = new XSSFWorkbook(new FileInputStream(EXCEL_REPLACE_TABLE));
+			XSSFSheet sheet = wb.getSheetAt(SETTINGS_SHEET);
+
+			XSSFRow row = sheet.getRow(MARKING_LIST_SIZE_ROW);
+			XSSFCell maxrow = row.getCell(MARKING_LIST_SIZE_CELL);
 
 			result = (int) (maxrow.getNumericCellValue());
 
@@ -61,7 +133,7 @@ public class ReadExcel {
 
 		try {
 			XSSFWorkbook wb = new XSSFWorkbook(new FileInputStream(EXCEL_REPLACE_TABLE));
-			XSSFSheet sheet = wb.getSheetAt(0);
+			XSSFSheet sheet = wb.getSheetAt(REPLACE_TABLE_SHEET);
 
 			XSSFRow row = sheet.getRow(REPLACE_TABLE_SIZE_ROW);
 			XSSFCell maxrow = row.getCell(REPLACE_TABLE_SIZE_CELL);
@@ -108,15 +180,16 @@ public class ReadExcel {
 
 		try {
 			XSSFWorkbook wb = new XSSFWorkbook(new FileInputStream(EXCEL_REPLACE_TABLE));
-			XSSFSheet sheet = wb.getSheetAt(0);
+			XSSFSheet sheet = wb.getSheetAt(SETTINGS_SHEET);
 
 			XSSFRow row = sheet.getRow(NOT_REPLACE_LIST_SIZE_ROW);
 			XSSFCell maxrow = row.getCell(NOT_REPLACE_LIST_SIZE_CELL);
 
 			for(int i = START_ROW; i < (int)maxrow.getNumericCellValue() + START_ROW; i++) {
-
 				row = sheet.getRow(i);
-				XSSFCell cell = row.getCell(2);		//無視文字列
+
+				//無視対象文字列
+				XSSFCell cell = row.getCell(NOT_REPLACE_LIST_CELL);
 
 				notReplaceList.add(cell.getStringCellValue());
 			}
@@ -134,5 +207,66 @@ public class ReadExcel {
 		}
 
 		return notReplaceList;
+	}
+
+	public static List<String> readMarkingList() {
+		List<String> markingList = new ArrayList<String>();
+
+		try {
+			XSSFWorkbook wb = new XSSFWorkbook(new FileInputStream(EXCEL_REPLACE_TABLE));
+			XSSFSheet sheet = wb.getSheetAt(SETTINGS_SHEET);
+
+			XSSFRow row = sheet.getRow(MARKING_LIST_SIZE_ROW);
+			XSSFCell maxrow = row.getCell(MARKING_LIST_SIZE_CELL);
+
+			for(int i = START_ROW; i < (int)maxrow.getNumericCellValue() + START_ROW; i++) {
+				row = sheet.getRow(i);
+
+				//注釈対象文字列
+				XSSFCell cell = row.getCell(MARKING_LIST_CELL);
+
+				markingList.add(cell.getStringCellValue());
+			}
+
+			wb.close();
+
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+			MainFrame.ErrMsg = e.toString();
+			markingList = null;
+		} catch (IOException e) {
+			e.printStackTrace();
+			MainFrame.ErrMsg = e.toString();
+			markingList = null;
+		}
+
+		return markingList;
+	}
+
+	public static String readMarkStr() {
+		String markStr = "";
+
+		try {
+			XSSFWorkbook wb = new XSSFWorkbook(new FileInputStream(EXCEL_REPLACE_TABLE));
+			XSSFSheet sheet = wb.getSheetAt(SETTINGS_SHEET);
+
+			XSSFRow row = sheet.getRow(MARK_STR_ROW);
+			XSSFCell cell = row.getCell(MARK_STR_CELL);
+
+			markStr = cell.getStringCellValue();
+
+			wb.close();
+
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+			MainFrame.ErrMsg = e.toString();
+			markStr = "";
+		} catch (IOException e) {
+			e.printStackTrace();
+			MainFrame.ErrMsg = e.toString();
+			markStr = "";
+		}
+
+		return markStr;
 	}
 }

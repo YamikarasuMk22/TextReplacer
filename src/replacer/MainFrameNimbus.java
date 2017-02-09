@@ -31,8 +31,10 @@ public class MainFrameNimbus {
 	public static JTextArea textArea;
 	public static JProgressBar progressBar;
 	public static String ErrMsg;
-	public static List<File> files;
-	public static int tmpFileNum = 0;
+
+	private static List<File> files;
+	private static File backUpFile;
+	private static int tmpFileNum = 0;
 
 	public static void main(String[] args) {
 		try {
@@ -77,13 +79,25 @@ public class MainFrameNimbus {
 		// ドロップ操作を有効にする
 		textArea.setTransferHandler(new DropFileHandler());
 
-		textArea.setText("一括置換するファイルをここにドロップしてください。\n" + "Backupフォルダにバックアップが作成されます。\n");
+		textArea.setText("※一括置換するファイルをここにドロップしてください。\n" + "Backupフォルダにバックアップが作成されます。\n");
 
-		int result = ReadExcel.getReplaceTableSize();
-		if (result > -1) {
-			textArea.append("置換テーブル読込成功:" + result + "行\n");
+		int replaceTableSize = ReadExcel.getReplaceTableSize();
+		if (replaceTableSize > -1) {
+			textArea.append("[置換テーブルサイズ:" + replaceTableSize + "行]\n");
 		} else {
 			textArea.append("置換テーブル読込失敗:" + ErrMsg + "\n");
+		}
+		int notReplaceListSize = ReadExcel.getNotReplaceListSize();
+		if (notReplaceListSize > -1) {
+			textArea.append("[無視フィルタ数:" + notReplaceListSize + "行]\n");
+		} else {
+			textArea.append("無視フィルタ読込失敗:" + ErrMsg + "\n");
+		}
+		int markingListSize = ReadExcel.getMarkingListSize();
+		if (markingListSize > -1) {
+			textArea.append("[注釈フィルタ数:" + markingListSize + "行]\n");
+		} else {
+			textArea.append("注釈フィルタ読込失敗:" + ErrMsg + "\n");
 		}
 
 		// ウィンドウ表示
@@ -152,50 +166,61 @@ public class MainFrameNimbus {
 				@Override
 				protected Integer doInBackground() throws Exception {
 
-					int replaceCount = 0; 	// 置換ファイルカウンタ
+					int fileCount = 0; 		// 置換ファイルカウンタ
 					int result = 0;		 	// 置換回数(ファイル毎)
+					int markCount = 0;		// 注釈回数(ファイル毎)
+					int notReplaceCount = 0;	// 無視回数(ファイル毎)
+
+					//置換テーブル
+					List<ReplaceTable> replaceTableList = new ArrayList<ReplaceTable>();
+					//無視リスト
+					List<String> notReplaceList = new ArrayList<String>();
+					//注釈リスト
+					List<String> markingList = new ArrayList<String>();
+					//注釈文字列
+					String markStr;
+
+					// 置換テーブル読み込み
+					replaceTableList = ReadExcel.readReplaceTable();
+					if (replaceTableList == null) {
+						result = -1;
+					}
+					// 無視リスト読み込み
+					notReplaceList = ReadExcel.readNotReplaceList();
+					if (notReplaceList == null) {
+						result = -1;
+					}
+					// 注釈リスト読み込み
+					markingList = ReadExcel.readMarkingList();
+					if (markingList == null) {
+						result = -1;
+					}
+					// 注釈文字列読み込み
+					markStr = ReadExcel.readMarkStr();
+					if (markStr.equals("")) {
+						result = -1;
+					}
 
 					for (File file : files) {
-						replaceCount ++;
-
-						List<ReplaceTable> replaceTableList = new ArrayList<ReplaceTable>();
-						List<String> notReplaceList = new ArrayList<String>();
-
-						// 置換テーブル読み込み
-						replaceTableList = ReadExcel.readReplaceTable();
-						if (replaceTableList == null) {
-							result = -1;
-							break;
-						}
-
-						// 無視リスト読み込み
-						notReplaceList = ReadExcel.readNotReplaceList();
-						if (notReplaceList == null) {
-							result = -1;
-							break;
-						}
+						fileCount ++;
 
 						// バックアップ
 						int backUpNumber = 1;
-						File backupFile = new File("BackUp\\" + file.getName() + ".BK" + backUpNumber);
+						backUpFile = new File("BackUp\\" + file.getName() + ".BK" + backUpNumber);
 
 						// バックアップファイル上書き回避
-						while (backupFile.exists()) {
+						while (backUpFile.exists()) {
 							backUpNumber++;
-							backupFile = new File("BackUp\\" + file.getName() + ".BK" + backUpNumber);
+							backUpFile = new File("BackUp\\" + file.getName() + ".BK" + backUpNumber);
 						}
-
 						try {
-							FileUtil.copyTargetFile(file, backupFile);
+							FileUtil.copyTargetFile(file, backUpFile);
 						} catch (IOException e) {
-							MainFrame.ErrMsg = e.toString();
+							ErrMsg = e.toString();
 							e.printStackTrace();
 							result = -1;
 							break;
 						}
-
-						// 行数取得
-						double fileRow = FileUtil.getFileRow(file);
 
 						// 文字列置換・ファイル置換
 						try {
@@ -207,8 +232,12 @@ public class MainFrameNimbus {
 
 							System.out.println(replaceTableList.size());
 
-							boolean notReplaceFlag = false;
-							double nowRow = 1;
+							boolean notReplaceFlag = false;	//無視フラグ
+							boolean MarkingFlag = false;		//注釈フラグ
+							double nowRow = 1;				//現在の行数
+
+							// 行数取得
+							double fileRow = FileUtil.getFileRow(file);
 
 							while ((strReadText = br.readLine()) != null) {
 
@@ -219,13 +248,24 @@ public class MainFrameNimbus {
 									}
 								}
 								if (notReplaceFlag) {
-									notReplaceFlag = false;
-									// System.out.println(strReadText);
+
 									sbWriteText.append(strReadText);
 									sbWriteText.append("\r\n");
 
+									//行カウント
 									nowRow = nowRow + 1;
+									notReplaceCount ++;
+
+									notReplaceFlag = false;
+
 									continue;
+								}
+
+								// 注釈リスト処理
+								for (int k = 0; k < markingList.size(); k++) {
+									if (FileUtil.isMatch(strReadText, markingList.get(k))) {
+										MarkingFlag = true;
+									}
 								}
 
 								// 置換処理
@@ -235,44 +275,50 @@ public class MainFrameNimbus {
 									String strBefore = replaceTable.getSearchStr();
 									String strAfter = replaceTable.getReplaceStr();
 
-									// System.out.print(i + "," + strBefore +
-									// "=>" + strAfter);
+									if (FileUtil.isMatch(strReadText, strBefore)) {
 
-									result = result + FileUtil.matchCounter(strReadText, strBefore);
+										//置換回数加算
+										result = result + FileUtil.matchCounter(strReadText, strBefore);
 
-									// System.out.println(":" + result);
+										//全ての検索文字列を置換
+										strReadText = strReadText.replaceAll(strBefore, strAfter);
 
-									strReadText = strReadText.replaceAll(strBefore, strAfter);
-
-									// System.out.println(strReadText);
+									}
 								}
+
+								//注釈の場合
+								if(MarkingFlag) {
+									strReadText = markStr + strReadText;
+									markCount ++;
+									MarkingFlag = false;
+								}
+
 								sbWriteText.append(strReadText);
 								sbWriteText.append("\r\n");
 
-								//置換中のファイルNo, 処理中の行数, 全体の行数, 置換数
-								publish(new int[]{replaceCount, (int)nowRow, (int)fileRow, result });
-			                    setProgress((int) (nowRow / fileRow * 100));
+								//置換中のファイルNo, 処理中の行数, 全体の行数, 置換数, 注釈数, 無視行数
+								publish(new int[]{
+										fileCount, (int)nowRow, (int)fileRow, result, markCount ,notReplaceCount
+								});
+								setProgress((int) (nowRow / fileRow * 100));
 
-			                    //System.out.println(replaceCount + "," + (int)nowRow + "," + (int)fileRow + "," + result);
-
-			                    nowRow = nowRow + 1;
+								//行カウント
+								nowRow = nowRow + 1;
 							}
 
 							FileWriter fw = new FileWriter(file);
 							fw.write(sbWriteText.toString());
-
-							// System.out.println(strReadText);
 
 							fw.close();
 							fr.close();
 
 						} catch (FileNotFoundException e) {
 							e.printStackTrace();
-							MainFrame.ErrMsg = e.toString();
+							ErrMsg = e.toString();
 							result = -1;
 						} catch (IOException e) {
 							e.printStackTrace();
-							MainFrame.ErrMsg = e.toString();
+							ErrMsg = e.toString();
 							result = -1;
 						}
 					}
@@ -281,7 +327,7 @@ public class MainFrameNimbus {
 				}
 
 				/** 途中経過の表示 **/
-				/** 0:置換中のファイルNo, 1:処理中の行数, 2:全体の行数, 3:置換数 **/
+				/** 0:置換中のファイルNo, 1:処理中の行数, 2:全体の行数, 3:置換数, 4:注釈数, 5:無視行数 **/
 				@Override
 				protected void process(List<int[]> chunks) {
 
@@ -298,6 +344,9 @@ public class MainFrameNimbus {
 
 							textArea.append("ファイル" + values[0]);
 							textArea.append("	" + file.getPath() + "\n");
+							textArea.append("	読込成功:" + values[2] + "行\n");
+
+							textArea.append("	バックアップ成功:" + backUpFile.getPath() + "\n");
 
 							tmpFileNum = values[0];
 						}
@@ -305,7 +354,9 @@ public class MainFrameNimbus {
 						//置換の終了
 						if(values[1] == values[2]) {
 							if (values[3] > -1) {
-								textArea.append("	置換成功:" + values[3] + "箇所\n");
+								textArea.append("	[置換成功:" + values[3] + "箇所]\n");
+								textArea.append("	[注釈数:" + values[4] + "箇所]\n");
+								textArea.append("	[無視された行:" + values[5] + "行]\n");
 							} else {
 								textArea.append("	置換失敗:" + ErrMsg + "\n");
 							}
@@ -317,15 +368,17 @@ public class MainFrameNimbus {
 				@Override
 				protected void done() {
 					try {
-						@SuppressWarnings("unused")
 						int result = get();
 
-						textArea.append("[置換終了]--------------------------------------------------------------------------\n");
+						if (result > -1) {
+							textArea.append("[置換終了]--------------------------------------------------------------------------\n");
+						} else {
+							textArea.append("	置換失敗:" + ErrMsg + "\n");
+							textArea.append("[置換終了]--------------------------------------------------------------------------\n");
+						}
 					} catch (InterruptedException e) {
-
 						e.printStackTrace();
 					} catch (ExecutionException e) {
-
 						e.printStackTrace();
 					}
 
@@ -337,8 +390,12 @@ public class MainFrameNimbus {
 					} else {
 						textArea.append("※ログファイル作成失敗:" + ErrMsg + "\n");
 					}
+
+					//初期化
+					tmpFileNum = 0;
 				}
 			};
+
 			// プログレスバーの処理
 			runReplace.addPropertyChangeListener(new PropertyChangeListener() {
 				@Override

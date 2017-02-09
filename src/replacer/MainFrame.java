@@ -20,7 +20,7 @@ public class MainFrame {
 	public static JFrame frame;
 	public static JTextArea textArea;
 
-	public static void main(String[] args) {
+	public static void subMain(String[] args) {
 		EventQueue.invokeLater(new Runnable() {
 			@SuppressWarnings("static-access")
 			public void run() {
