@@ -8,6 +8,8 @@ public class ReplaceTable {
 
 	private String replaceStr;			//置換文字列
 
+	private String notReplaceStr;		//置換禁止文字列
+
 
 	public int getNumber() {
 		return number;
@@ -31,5 +33,13 @@ public class ReplaceTable {
 
 	public void setReplaceStr(String replaceStr) {
 		this.replaceStr = replaceStr;
+	}
+
+	public String getNotReplaceStr() {
+		return notReplaceStr;
+	}
+
+	public void setNotReplaceStr(String notReplaceStr) {
+		this.notReplaceStr = notReplaceStr;
 	}
 }

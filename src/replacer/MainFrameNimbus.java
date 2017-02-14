@@ -9,10 +9,13 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
-import java.io.FileReader;
-import java.io.FileWriter;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
+import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
@@ -37,6 +40,8 @@ public class MainFrameNimbus {
 	private static int tmpFileNum = 0;
 
 	public static void main(String[] args) {
+		System.setProperty("file.encoding", "UTF-8");
+
 		try {
 			UIManager.setLookAndFeel("com.sun.java.swing.plaf.nimbus.NimbusLookAndFeel");
 		} catch (Exception ex) {
@@ -233,8 +238,7 @@ public class MainFrameNimbus {
 							String strReadText = "";
 							StringBuffer sbWriteText = new StringBuffer();
 
-							FileReader fr = new FileReader(file);
-							BufferedReader br = new BufferedReader(fr);
+							BufferedReader read = new BufferedReader(new InputStreamReader(new FileInputStream(file), "UTF-8"));
 
 							System.out.println(replaceTableList.size());
 
@@ -245,7 +249,7 @@ public class MainFrameNimbus {
 							// 行数取得
 							double fileRow = FileUtil.getFileRow(file);
 
-							while ((strReadText = br.readLine()) != null) {
+							while ((strReadText = read.readLine()) != null) {
 
 								// 無視リスト処理
 								for (int j = 0; j < notReplaceList.size(); j++) {
@@ -254,6 +258,8 @@ public class MainFrameNimbus {
 									}
 								}
 								if (notReplaceFlag) {
+
+									strReadText = new String(strReadText.toString().getBytes("UTF-8"), "UTF-8");
 
 									sbWriteText.append(strReadText);
 									sbWriteText.append("\r\n");
@@ -280,15 +286,29 @@ public class MainFrameNimbus {
 									ReplaceTable replaceTable = replaceTableList.get(i);
 									String strBefore = replaceTable.getSearchStr();
 									String strAfter = replaceTable.getReplaceStr();
+									String notReplaceStr = replaceTable.getNotReplaceStr();
+
+									boolean notReplaceStrFlag = false;
+									String[] sp = notReplaceStr.split(",", 0);
 
 									if (FileUtil.isMatch(strReadText, strBefore)) {
+										// 置換禁止条件処理
+										for (int nr = 0; nr < sp.length; nr++) {
+											System.out.println(sp[nr]);
+											if (FileUtil.isMatch(strReadText, sp[nr])) {
+												notReplaceStrFlag = true;
+											}
+										}
 
-										//置換回数加算
-										result = result + FileUtil.matchCounter(strReadText, strBefore);
+										if(!notReplaceStrFlag) {
+											// 置換回数加算
+											result = result + FileUtil.matchCounter(strReadText, strBefore);
 
-										//全ての検索文字列を置換
-										strReadText = strReadText.replaceAll(strBefore, strAfter);
+											// 全ての検索文字列を置換
+											strReadText = strReadText.replaceAll(strBefore, strAfter);
 
+											notReplaceStrFlag = false;
+										}
 									}
 								}
 
@@ -298,6 +318,8 @@ public class MainFrameNimbus {
 									markCount ++;
 									MarkingFlag = false;
 								}
+
+								strReadText = new String(strReadText.toString().getBytes("UTF-8"), "UTF-8");
 
 								sbWriteText.append(strReadText);
 								sbWriteText.append("\r\n");
@@ -312,11 +334,12 @@ public class MainFrameNimbus {
 								nowRow = nowRow + 1;
 							}
 
-							FileWriter fw = new FileWriter(file);
-							fw.write(sbWriteText.toString());
+							PrintWriter write = new PrintWriter(new OutputStreamWriter(new FileOutputStream(file), "UTF-8"));
 
-							fw.close();
-							fr.close();
+							write.write(sbWriteText.toString());
+
+							write.close();
+							read.close();
 
 						} catch (FileNotFoundException e) {
 							e.printStackTrace();

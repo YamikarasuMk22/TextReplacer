@@ -138,21 +138,34 @@ public class ReadExcel {
 			XSSFRow row = sheet.getRow(REPLACE_TABLE_SIZE_ROW);
 			XSSFCell maxrow = row.getCell(REPLACE_TABLE_SIZE_CELL);
 
+			String cell1utf8 = "";
+			String cell2utf8 = "";
+			String cell3utf8 = "";
+
 			for(int i = START_ROW; i < (int)maxrow.getNumericCellValue() + START_ROW; i++) {
 
 				row = sheet.getRow(i);
 				XSSFCell cell1 = row.getCell(0);	//検索文字列
 				XSSFCell cell2 = row.getCell(1);	//置換文字列
+				XSSFCell cell3 = row.getCell(2);	//置換禁止条件
 
 				//検索文字列重複列は無視
 				if(cell1.getStringCellValue().equals(tmpStr)) {
 					continue;
 				}
 
+				cell1utf8 = new String(cell1.getStringCellValue().getBytes("UTF-8"), "UTF-8");
+				cell2utf8 = new String(cell2.getStringCellValue().getBytes("UTF-8"), "UTF-8");
+				cell3utf8 = new String(cell3.getStringCellValue().getBytes("UTF-8"), "UTF-8");
+
+				cell3utf8 = cell3utf8.replaceAll("!", "");
+				System.out.print(cell3utf8);
+
 				ReplaceTable cells = new ReplaceTable();
 				cells.setNumber(i);
-				cells.setSearchStr(cell1.getStringCellValue());
-				cells.setReplaceStr(cell2.getStringCellValue());
+				cells.setSearchStr(cell1utf8);
+				cells.setReplaceStr(cell2utf8);
+				cells.setNotReplaceStr(cell3utf8);
 
 				replaceTable.add(cells);
 
@@ -185,13 +198,17 @@ public class ReadExcel {
 			XSSFRow row = sheet.getRow(NOT_REPLACE_LIST_SIZE_ROW);
 			XSSFCell maxrow = row.getCell(NOT_REPLACE_LIST_SIZE_CELL);
 
+			String cell1utf8;
+
 			for(int i = START_ROW; i < (int)maxrow.getNumericCellValue() + START_ROW; i++) {
 				row = sheet.getRow(i);
 
 				//無視対象文字列
 				XSSFCell cell = row.getCell(NOT_REPLACE_LIST_CELL);
 
-				notReplaceList.add(cell.getStringCellValue());
+				cell1utf8 = new String(cell.getStringCellValue().getBytes("UTF-8"), "UTF-8");
+
+				notReplaceList.add(cell1utf8);
 			}
 
 			wb.close();
@@ -219,13 +236,17 @@ public class ReadExcel {
 			XSSFRow row = sheet.getRow(MARKING_LIST_SIZE_ROW);
 			XSSFCell maxrow = row.getCell(MARKING_LIST_SIZE_CELL);
 
+			String cell1utf8;
+
 			for(int i = START_ROW; i < (int)maxrow.getNumericCellValue() + START_ROW; i++) {
 				row = sheet.getRow(i);
 
 				//注釈対象文字列
 				XSSFCell cell = row.getCell(MARKING_LIST_CELL);
 
-				markingList.add(cell.getStringCellValue());
+				cell1utf8 = new String(cell.getStringCellValue().getBytes("UTF-8"), "UTF-8");
+
+				markingList.add(cell1utf8);
 			}
 
 			wb.close();
@@ -253,7 +274,7 @@ public class ReadExcel {
 			XSSFRow row = sheet.getRow(MARK_STR_ROW);
 			XSSFCell cell = row.getCell(MARK_STR_CELL);
 
-			markStr = cell.getStringCellValue();
+			markStr = new String(cell.getStringCellValue().getBytes("UTF-8"), "UTF-8");
 
 			wb.close();
 
